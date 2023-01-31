@@ -1,15 +1,15 @@
 @extends('layouts.app')
 @section('content')
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang = "{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset = "utf-8">
+        <meta name = "viewport" content = "width = device-width, initial-scale = 1">
 
         <title>在庫管理システム</title>
 
         <!-- Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;600&display=swap" rel="stylesheet">
+        <link href = "https://fonts.googleapis.com/css2?family = Nunito:wght@200;600&display = swap" rel = "stylesheet">
 
         <!-- Styles -->
         <style>
@@ -66,34 +66,34 @@
         </style>
     </head>
     <body>
-            <div class="input-group">
+            <div class = "input-group">
                 <h5>検索フォーム</h5>
-                <form action="{{ route( 'products' ) }}" method="GET">
+                <form action = "{{ route( 'products' ) }}" method = "GET">
                     <p>
-                        <input type="text" class="form-control" name="productName" placeholder="商品名を入力"></p>
-                        <select class="form-select" id="product_id" name="company_id">
-                            <option selected="selected" value="">選択してください</option>
+                        <input type = "text" class = "form-control" name = "productName" placeholder = "商品名を入力"></p>
+                        <select class = "form-select" id = "product_id" name = "company_id">
+                            <option selected = "selected" value = "">選択してください</option>
                             @foreach( $companies as $company)
-                                <option value="{{ $company->company_id }}">{{ $company->companyName }}</option>
+                                <option value = "{{ $company->company_id }}">{{ $company->companyName }}</option>
                             @endforeach
                         </select>
-                    <span class="input-group-btn">
-                        <button type="submit" class="btn btn-default">検索</button>
+                    <span class = "input-group-btn">
+                        <button type = "submit" class = "btn btn-default">検索</button>
                     </span>
                 </form>
             </div>
 
-            <div class="content">
-                <div class="title m-b-md">
+            <div class = "content">
+                <div class = "title m-b-md">
                     <h5>商品一覧</h5>
                     @if( session( 'err_msg' ))
-                        <p class="text-danger">
+                        <p class = "text-danger">
                             {{ session( 'err_msg' )}}
                         </p>
                     @endif
                 </div>
 
-                <div class="links">
+                <div class = "links">
                     <table>
                         <tr>
                             <th>ID</th>
@@ -109,17 +109,17 @@
                     @foreach ( $products as $product )
                         <tr>
                             <td>{{ $product->id }}</td>
-                            <td><img src="{{ Storage::url($product->imgPath) }}" width="50px" alt=""></td>
+                            <td><img src = "{{ Storage::url($product->imgPath) }}" width = "50px" alt = ""></td>
                             <td>{{ $product->productName }}</td>
                             <td>{{ $product->price }}</td>
                             <td>{{ $product->stock }}</td>
                             <td>{{ $product->companyName }}</td>
-                            <td><a href="{{ route( 'detail', [ 'id' => $product->id]) }}" class="btn btn-primary">詳細表示</a></td>
+                            <td><a href = "{{ route( 'detail', [ 'id' => $product->id]) }}" class = "btn btn-primary">詳細表示</a></td>
                             <td>
-                                <form action="{{ route( 'delete', $product->id) }}" method="POST" onSubmit="return checkSubmit('削除しますか？')">
+                                <form action = "{{ route( 'delete', $product->id) }}" method = "POST" onSubmit = "return checkSubmit('削除しますか？')">
                                 @csrf
                                 @method('delete')
-                                <button type="submit" class="btn btn-danger">
+                                <button type = "submit" class = "btn btn-danger">
                                 削除
                                 </button>
                                 </form>
@@ -128,7 +128,7 @@
                     @endforeach
                     </tbody>
                     </table>
-                    <button><a href="{{ route('create') }}">新規登録</a></button>
+                    <button><a href = "{{ route('create') }}">新規登録</a></button>
                 </div>
             </div>
         </div>
@@ -136,4 +136,4 @@
 </html>
 @endsection
 
-<script src="{{ mix('/js/common.js') }}"></script>
+<script src = "{{ mix('/js/common.js') }}"></script>

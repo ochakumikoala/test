@@ -6,6 +6,7 @@
         <form method = "POST" action = "{{ route('store') }}" onSubmit = "return checkSubmit()" id = "regist" enctype = "multipart/form-data">
             @csrf
             <div class = "form-group">
+                <input type = "hidden" name = "productId" id = "product_id">
                 <p>商品名：<input type = "text" name = "productName" value = "{{ old('productName') }}"></p>
                 <p>会社名（メーカー名）:
                     <select class = "form-select" id = "product_id" name = "company_id">
@@ -24,7 +25,7 @@
                 <button type = "submit" class = "btn btn-primary">
                     登録する
                 </button>
-                <button><a class = "btn btn-secondary" href = "{{ route( 'products' ) }}">
+                <button type = "button"><a class = "btn btn-secondary" href = "{{ route( 'products' ) }}">
                     戻る
                 </a></button>
             </div>

@@ -6,13 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Company;
 use App\Http\Requests\ProductRequest;
+use App\Http\Requests\ProductListRequest;
 use Illuminate\Support\Facades\DB;
 use Validator;
 use \InterventionImage;
+use Illuminate\View\View;
 
 
 class ProductController extends Controller
 {
+    private Product $product;
+    private Company $company;
+
+    public function __construct(Product $product, Company $company) {
+        $this->product = $product;
+        $this->company = $company;
+    }
+
+
 
     /**
      * 商品一覧を表示する
@@ -20,33 +31,19 @@ class ProductController extends Controller
      * @return view
      */
 
-    public function productList(Request $request) {
-        $companies = Company::all();
-
+    public function productList(Request $request): View{
+        // $validated = $request->validated();
         $productName = $request->input( 'productName' );
-        $companyId = $request->input( 'company_id' );
+        $companyId = $request->input( 'companyName' );
+        
+        $products = $this->product->getProducts($productName, $companyId);
 
-        $query =  Product::query();
-
-        $query->leftJoin('companies', 'products.companyName', '=', 'companies.companyName');
-
-        if( !empty( $productName )){
-            $query->where( 'products.productName', 'LIKE', "%$productName%" );
-        }
-
-        if( !empty( $companyId )){
-            $query->where('companies.company_id', $companyId );
-        }
-
-        $products = $query->get();
-
-        return view('list', [ 'products' => $products, 'companies' => $companies ]);
+        return view('list', [ 'products' => $products, 'companies' => $this->company->getAll()]);
     }
 
     //削除処理
     public function productDestroy($id)
     {
-        Product::destroy($id);
         return redirect(route('products'));
     }
 
@@ -59,7 +56,6 @@ class ProductController extends Controller
      */
 
     public function showDetail($id) {
-        $companies = Company::all();
         $product = Product::find($id);
 
         if (is_null($product)) {
@@ -76,8 +72,7 @@ class ProductController extends Controller
      * @return view
      */
     public function showCreate() {
-        $companies = Company::all();
-        return view('form', compact('companies'));
+        return view('form', ['companies' => $this->company->getAll()]);
     }
 
     /**
@@ -86,40 +81,26 @@ class ProductController extends Controller
      * @return view
      */
     public function exeStore(ProductRequest $request) {
-        $companies = Company::all();
-        //listbladeのデータを受け取る
+        $companyId = $request->input( 'company_id' );
+        $companyName = $this->company->findById($companyId)->companyName;
         $inputs = $request->all();
-        logger($inputs);
-        //dd($inputs);
 
         \DB::beginTransaction();
         try {
-            logger($request->hasFile('imgPath'));
-            logger(__LINE__);
+            $name = null;
             if($request->hasFile('imgPath')) {
-                logger(__LINE__);
                 $file = $request->file('imgPath');
                 $name = $file->getClientOriginalName();
                 InterventionImage::make($file)->resize(1080, 700)->save(public_path( 'storage/' . $name ) );
-            } else {
-                logger(__LINE__);
-                $name = null;
             }
-            logger(__LINE__);
             $inputs['imgPath'] = $name;
-            logger(__LINE__);
-            logger($inputs);
-            Product::create($inputs);
+            $inputs['companyName'] = $companyName;
+            $this->product->createProduct($inputs);
             \DB::commit();
         }catch(\Throwable $e) {
-            //登録されずにエラーページ500が表示される
-            logger(__LINE__);
-            var_dump($e->getMessage());
             \DB::rollback();
-            abort(500);
         }
 
-        //商品を登録する
         \Session::flash( 'err_msg', '商品を登録しました！' );
         return redirect( route( 'create' ));
     }
@@ -131,9 +112,7 @@ class ProductController extends Controller
      */
 
     public function showEdit($id) {
-        $companies = Company::all();
-        $product = Product::find($id);
-        return view( 'edit', [ 'product' => $product, 'companies' => $companies ]);
+        return view( 'edit', [ 'product' => $this->product->findById($id), 'companies' => $this->company->getAll()]);
     }
 
     /**
@@ -142,49 +121,33 @@ class ProductController extends Controller
      * @return view
      */
     public function exeUpdate(ProductRequest $request) {
-        $companies = Company::all();
+
         //商品一覧からデータを受け取る
         $inputs = $request->all();
-        //dd($inputs);
-        //$inputsの中身を確認できる
 
         \DB::beginTransaction();
         try {
-
+            $name = null;
+            $companyId = $request->input( 'company_id' );
+            $companyName = $this->company->findById($companyId)->companyName;
             if($request->hasFile('imgPath')) {
-                logger(__LINE__);
-                $fileName = $request->file('imgPath')->store('public');
-            } else {
-                logger(__LINE__);
-                $fileName = null;
+                $file = $request->file('imgPath');
+                $name = $file->getClientOriginalName();
+                InterventionImage::make($file)->resize(1080, 700)->save(public_path( 'storage/' . $name ) );
             }
-
-            $product = Product::find( $inputs[ 'id' ]);
-            $product->fill([
-                'productName' => $inputs[ 'productName' ],
-                'companyName' => $inputs[ 'companyName' ],
-                'price' => $inputs[ 'price' ],
-                'stock' => $inputs[ 'stock' ],
-                'comment' => $inputs[ 'comment' ],
-            ]);
-
-            if($fileName) {
-                $product->imgPath = $fileName;
-            }
-
-            $product->save();
+            $inputs['imgPath'] = $name;
+            $inputs['companyName'] = $companyName;
+            $this->product->updateProduct($inputs);
 
             \DB::commit();
         }catch(\Throwable $e) {
             //登録されずにエラーページ500が表示される
-            var_dump($e->getMessage());
             \DB::rollback();
-            abort(500);
         }
 
         //商品情報を更新する
-        \Session::flash('err_msg', '商品情報を更新しました！');
-        return redirect( route( 'edit', ['id' => $inputs['id']], compact('companies')));
+        \Session::flash('flash_msg', '商品情報を更新しました！');
+        return redirect( route( 'edit', ['id' => $inputs['id'], 'companies' => $this->company->getAll()] ));
     }
 
 }
