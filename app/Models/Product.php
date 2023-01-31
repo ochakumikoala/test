@@ -9,6 +9,7 @@ use App\Http\Requests\ProductRequest;
 use Validator;
 use \InterventionImage;
 use App\Models\Company;
+use Illuminate\Database\Eloquent\Builder;
 
 
 class Product extends Model
