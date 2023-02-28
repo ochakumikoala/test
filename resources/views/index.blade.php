@@ -70,11 +70,11 @@
                 <h5>検索フォーム</h5>
                 <form action = "{{ route( 'products' ) }}" method = "GET">
                     <p>
-                        <input type = "text" class = "form-control" name = "productName" placeholder = "商品名を入力"></p>
-                        <select class = "form-select" id = "product_id" name = "company_id">
+                        <input type = "text" class = "form-control" name = "product_name" value = "{{request('search')}}" placeholder = "商品名を入力"></p>
+                        <select class = "form-select" id = "company_id" name = "company_name">
                             <option selected = "selected" value = "">選択してください</option>
                             @foreach( $companies as $company)
-                                <option value = "{{ $company->company_id }}">{{ $company->companyName }}</option>
+                                <option value = "{{ $company->company_id }}">{{ $company->company_name }}</option>
                             @endforeach
                         </select>
                     <span class = "input-group-btn">
@@ -108,20 +108,20 @@
                     <tbody>
                     @foreach ( $products as $product )
                         <tr>
-                            <td>{{ $product->id }}</td>
-                            <td><img src = "{{ Storage::url($product->imgPath) }}" width = "50px" alt = ""></td>
-                            <td>{{ $product->productName }}</td>
+                            <td>{{ $product->product_id }}</td>
+                            <td><img src = "{{ Storage::url($product->img_path) }}" width = "50px" alt = ""></td>
+                            <td>{{ $product->product_name }}</td>
                             <td>{{ $product->price }}</td>
                             <td>{{ $product->stock }}</td>
-                            <td>{{ $product->companyName }}</td>
-                            <td><a href = "{{ route( 'detail', [ 'id' => $product->id]) }}" class = "btn btn-primary">詳細表示</a></td>
+                            <td>{{ $product->company->company_name }}</td>
+                            <td><a href = "{{ route( 'detail', [ 'id' => $product->product_id ]) }}" class = "btn btn-primary">詳細表示</a></td>
                             <td>
-                                <form action = "{{ route( 'delete', $product->id) }}" method = "POST" onSubmit = "return checkSubmit('削除しますか？')">
-                                @csrf
-                                @method('delete')
-                                <button type = "submit" class = "btn btn-danger">
-                                削除
-                                </button>
+                                <form action = "{{ route( 'delete', [ 'id' => $product->product_id ]) }}" method = "POST" onSubmit = "return checkSubmit('削除しますか？')">
+                                    @csrf
+                                    @method('delete')
+                                    <button type = "submit" class = "btn btn-danger">
+                                    削除
+                                    </button>
                                 </form>
                             </td>
                         </tr>

@@ -2,68 +2,72 @@
 
 namespace App\Http\Controllers;
 
+use App\Components\ExifComponent;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Company;
-use App\Http\Requests\ProductRequest;
-use App\Http\Requests\ProductListRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Intervention\Image\Facades\Image;
 use \InterventionImage;
 use Illuminate\View\View;
 
 
 class ProductController extends Controller
 {
-    private Product $product;
-    private Company $company;
+    private $product;
+    private $company;
 
     public function __construct(Product $product, Company $company) {
-        $this->product = $product;
-        $this->company = $company;
+        $this->product = new Product();
+        $this->company = new Company();
     }
-
-
 
     /**
      * 商品一覧を表示する
      *
+     * @param $request
      * @return view
      */
 
-    public function productList(Request $request): View{
-        // $validated = $request->validated();
-        $productName = $request->input( 'productName' );
-        $companyId = $request->input( 'companyName' );
+    public function index(Request $request) {
+        $product_name = $request->input( 'product_name' );
+        $company_id = $request->input( 'company_name' );
         
-        $products = $this->product->getProducts($productName, $companyId);
+        $products = $this->product->getProducts($product_name, $company_id);
 
-        return view('list', [ 'products' => $products, 'companies' => $this->company->getAll()]);
+        return view('index', [ 'products' => $products, 'companies' => $this->company->getAll()]);
     }
-
-    //削除処理
-    public function productDestroy($id)
-    {
-        return redirect(route('products'));
-    }
-
-
-
+    
     /**
-     * 商品詳細を表示する
+     * 削除処理
+     *
      * @param int $id
      * @return view
      */
-
-    public function showDetail($id) {
+    public function destroy($id)
+    {
         $product = Product::find($id);
+        $product->delete();
+        return redirect(route('products'));
+    }
 
-        if (is_null($product)) {
+    /**
+     * 商品詳細を表示する
+     *
+     * @param int $id
+     * @return view
+     */
+    public function show($id) {
+        $product = Product::find($id);
+        if (empty($product)) {
             \Session::flash('err_msg', 'データがありません。');
-            return redirect(route('products'));
+            return redirect(route('index'));
         }
-
-        return view('detail', [ 'product' => $product ]);
+        return view( 'detail', compact('product') );
     }
 
     /**
@@ -71,8 +75,11 @@ class ProductController extends Controller
      *
      * @return view
      */
-    public function showCreate() {
-        return view('form', ['companies' => $this->company->getAll()]);
+    public function create() {
+        $companies = $this->company->all();
+        $route = route('create');
+        $method = 'post';
+        return view('form')->with(compact('companies', 'route', 'method'));
     }
 
     /**
@@ -80,28 +87,8 @@ class ProductController extends Controller
      *
      * @return view
      */
-    public function exeStore(ProductRequest $request) {
-        $companyId = $request->input( 'company_id' );
-        $companyName = $this->company->findById($companyId)->companyName;
-        $inputs = $request->all();
-
-        \DB::beginTransaction();
-        try {
-            $name = null;
-            if($request->hasFile('imgPath')) {
-                $file = $request->file('imgPath');
-                $name = $file->getClientOriginalName();
-                InterventionImage::make($file)->resize(1080, 700)->save(public_path( 'storage/' . $name ) );
-            }
-            $inputs['imgPath'] = $name;
-            $inputs['companyName'] = $companyName;
-            $this->product->createProduct($inputs);
-            \DB::commit();
-        }catch(\Throwable $e) {
-            \DB::rollback();
-        }
-
-        \Session::flash( 'err_msg', '商品を登録しました！' );
+    public function store(Request $request) {
+        $registerProduct = $this->product->createProduct($request);
         return redirect( route( 'create' ));
     }
 
@@ -111,43 +98,43 @@ class ProductController extends Controller
      * @return view
      */
 
-    public function showEdit($id) {
-        return view( 'edit', [ 'product' => $this->product->findById($id), 'companies' => $this->company->getAll()]);
+    public function edit($id) {
+        $companies = $this->company->all();
+        $product = Product::find($id);
+        if (empty($product)) {
+            \Session::flash('err_msg', 'データがありません。');
+            return redirect(route('index'));
+        }
+        return view( 'edit', compact('companies', 'product') );
     }
 
     /**
      * 商品情報を更新する
      *
+     * @params id, $request
      * @return view
      */
-    public function exeUpdate(ProductRequest $request) {
 
-        //商品一覧からデータを受け取る
-        $inputs = $request->all();
-
-        \DB::beginTransaction();
-        try {
-            $name = null;
-            $companyId = $request->input( 'company_id' );
-            $companyName = $this->company->findById($companyId)->companyName;
-            if($request->hasFile('imgPath')) {
-                $file = $request->file('imgPath');
-                $name = $file->getClientOriginalName();
-                InterventionImage::make($file)->resize(1080, 700)->save(public_path( 'storage/' . $name ) );
-            }
-            $inputs['imgPath'] = $name;
-            $inputs['companyName'] = $companyName;
-            $this->product->updateProduct($inputs);
-
-            \DB::commit();
-        }catch(\Throwable $e) {
-            //登録されずにエラーページ500が表示される
-            \DB::rollback();
-        }
-
-        //商品情報を更新する
-        \Session::flash('flash_msg', '商品情報を更新しました！');
-        return redirect( route( 'edit', ['id' => $inputs['id'], 'companies' => $this->company->getAll()] ));
+    public function update(Request $request) {
+        $product_model = new Product();
+        $id = $request->product_id;
+        $product = Product::find($id);
+        $product_model->updateProduct($request, $id);
+        return redirect( route( 'edit', ['id' => $id] ));
     }
 
+
+    //画像を表示させる
+    public function image(Request $request, Product $product) {
+
+        // バリデーション省略
+        $originalImg = $request->img_path;
+      
+          if($originalImg->isValid()) {
+            $filePath = $originalImg->store('public');
+            $product->image = str_replace('public/', '', $filePath);
+            $product->save();
+          }
+      
+      }
 }

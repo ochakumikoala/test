@@ -21,24 +21,24 @@ Auth::routes();
 //ログインしていないとログイン画面以外の表示はされない
 Route::middleware([ 'auth' ])->prefix( 'product' )->group( function () {
     //商品一覧画面を表示
-    Route::get( '/', 'ProductController@productList' )->name( 'products' );
-    Route::post( '/search', 'ProductController@productSearch' )->name( 'search' );
+    Route::get( '/', 'ProductController@index' )->name( 'products' );
+    Route::get('posts', 'ProductController@search')->name('search');
 
     //商品の削除
-    Route::delete( '/destroy/{id}', 'ProductController@productDestroy' )->name( 'delete' );
+    Route::delete( '/destroy/{id}', 'ProductController@destroy' )->name( 'delete' );
 
     //商品登録画面を表示
-    Route::get( '/create', 'ProductController@showCreate' )->name( 'create' );
+    Route::get( '/create', 'ProductController@create' )->name( 'create' );
 
     //商品登録
-    Route::post( '/store', 'ProductController@exeStore' )->name( 'store' );
+    Route::post( '/store', 'ProductController@store' )->name( 'store' );
 
     //商品詳細画面を表示
-    Route::get( '/{id}', 'ProductController@showDetail' )->name( 'detail' );
+    Route::get( '/{id}', 'ProductController@show' )->name( 'detail' );
 
-    //商品編集画面を表示
-    Route::get( '/edit/{id}', 'ProductController@showEdit' )->name( 'edit' );
-    Route::post( '/update', 'ProductController@exeUpdate' )->name( 'update' );
+    //商品編集画面を表示/更新
+    Route::get( '/edit/{id}', 'ProductController@edit' )->name( 'edit' );
+    Route::post( '/update', 'ProductController@update' )->name( 'update' );
 
 });
 

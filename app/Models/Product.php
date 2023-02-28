@@ -10,59 +10,105 @@ use Validator;
 use \InterventionImage;
 use App\Models\Company;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 
 class Product extends Model
 {
     use SoftDeletes;
     protected $table = 'products';
+    protected $primaryKey = 'product_id';
     protected $fillable =
-    [
-        'imgPath',
-        'productName',
-        'companyName',
-        'comment',
-        'price',
-        'stock'
-    ];
+        [
+            'product_id',
+            'company_id',
+            'img_path',
+            'product_name',
+            'price',
+            'stock',
+            'comment',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+        ];
+
 
     //メーカーと商品の関係は多対一（belongsToを使用する）
-    public function company(){
-        return $this->belongsTo( Company::class );
+    public function company() {
+        return $this->belongsTo(Company::class, 'company_id', 'company_id');
     }
 
-    // 条件に一致するProduct(this)の一覧を返却する
-    public function getProducts($productName, $companyId) {
-        return self::query()
-        ->leftJoin('companies', 'products.companyName', '=', 'companies.companyName')
-        ->when(!is_null($productName), function (Builder $query) use ($productName) {
-            $query->where('products.productName', 'LIKE', "%$productName%");
-        })
-        ->when(!is_null($companyId), function (Builder $query) use ($companyId) {
-            $query->orWhere('companies.company_id', $companyId);
-        })
-        ->get();
+    //productsテーブルから全てのデータを取得
+    public function findAllProducts(){
+        return Product::all();
+    }
+
+    //リクエストされたIDをもとにproductsテーブルのレコードを1件取得
+    public function findProductById($id){
+        return Product::find($id);
     }
 
 
-      //商品新規登録
-      public function createProduct($inputs){
-        Self::create($inputs);
-      }
+    // 一覧表示の検索結果を返す
+    public function getProducts($product_name, $company_id) {
+        $query = Product::query();
 
-      //削除処理
-      public function deleteById($id){
-        Self::destroy($id);
-      }
-      
-      //商品のIDを取ってくる
-      public function findById($id){
-        return Self::find($id);
-      }
+        if (!empty($product_name)) {
+            $query->where('product_name', 'LIKE', '%' . $product_name . '%');
+        }
+        if (!empty($company_id)) {
+            $query->where('company_id', $company_id);
+        }
 
-      //更新処理
-      public function updateProduct($inputs){
-        $this->findById($inputs['id'])->fill($inputs)->save();
-      }
+        $products = $query->get();
+        return $products;
+    }
+
+    //削除処理
+    public function deleteById($id) {
+        return $this->destroy($id);
+    }
+
+    //商品新規登録
+    public function createProduct($request) {
+        $inputs = $request->all();
+
+        if($request->hasFile('img_path')){
+            $file = $request->file('img_path');
+            $name = $file->getClientOriginalName();
+            InterventionImage::make($file)->resize(1080, 700)->save(public_path( 'storage/' . $name ));
+        }else{
+            $name = null;
+        } 
+        $inputs['img_path'] = $name;
+        Product::create($inputs);
+    }
+
+
+    //更新処理
+    public function updateProduct($request, $id) {
+       if($request->hasFile('img_path')){
+            $file_name = $request->file('img_path')->store('public');
+        }else{
+            $file_name = null;
+        }        
+
+        $product = Product::find($id);
+
+        $product->company_id = $request->company_id;
+        $product->img_path = $request->img_path;
+        $product->product_name = $request->product_name;
+        $product->price = $request->price;
+        $product->stock = $request->stock;
+        $product->comment = $request->comment;
+        $product->created_at = $request->created_at;
+        
+        if($file_name) {
+            $product->img_path = $file_name;
+        }
+
+        $product->save();
+
+    }
+    
 }
-
