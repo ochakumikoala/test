@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Models\Company;
+use App\Models\Product;
 
 
 
@@ -17,7 +17,7 @@ class company extends Model
         'company_id',
     ];
 
-    //メーカーと商品の関係は一対多（hasManyを使用する）
+    //メーカーはたくさんの商品を持つというリレーションの定義
     public function products(){
         return $this->hasMany( Product::class );
     }
@@ -32,4 +32,5 @@ class company extends Model
     public function getAll(){
         return self::all();
     }
+    
 }

@@ -11,11 +11,13 @@ use \InterventionImage;
 use App\Models\Company;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
+use Kyslik\ColumnSortable\Sortable;
 
 
 class Product extends Model
 {
     use SoftDeletes;
+    use Sortable;
     protected $table = 'products';
     protected $primaryKey = 'product_id';
     protected $fillable =
@@ -32,10 +34,20 @@ class Product extends Model
             'deleted_at',
         ];
 
+    public $sortable = 
+        [
+            'product_id',
+            'company_id',
+            'img_path',
+            'product_name',
+            'price',
+            'stock',
+        ];
 
-    //メーカーと商品の関係は多対一（belongsToを使用する）
+    //商品は会社に属するというリレーションの定義
     public function company() {
-        return $this->belongsTo(Company::class, 'company_id', 'company_id');
+        return $this->belongsTo(Company::class, 'company_id', 'company_id'); 
+        //第一引数がproductsTableで指定しているcompany_id,第二引数がcompaniesTableで指定しているcompany_id
     }
 
     //productsテーブルから全てのデータを取得
@@ -50,17 +62,29 @@ class Product extends Model
 
 
     // 一覧表示の検索結果を返す
-    public function getProducts($product_name, $company_id) {
-        $query = Product::query();
-
+    public function getProducts($product_name, $company_id, $min_price, $max_price, $min_stock, $max_stock) {
+        $query = Product::query()->with('company');
+        
         if (!empty($product_name)) {
             $query->where('product_name', 'LIKE', '%' . $product_name . '%');
         }
         if (!empty($company_id)) {
             $query->where('company_id', $company_id);
         }
-
-        $products = $query->get();
+        if (!empty($min_price)) {
+            $query->where('price', Product::min('price'), $min_price);
+        }
+        if (!empty($max_price)) {
+            $query->where('price', Product::max('price'), $max_price);
+        }
+        if (!empty($min_stock)) {
+            $query->where('stock', Product::min('stock'), $min_stock);
+        }
+        if (!empty($max_stock)) {
+            $query->where('stock', Product::max('stock'), $max_stock);
+        }
+        
+        $products = $query->sortable()->get();
         return $products;
     }
 
@@ -110,5 +134,4 @@ class Product extends Model
         $product->save();
 
     }
-    
 }

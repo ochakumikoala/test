@@ -1,84 +1,22 @@
 @extends('layouts.app')
 @section('content')
-<!DOCTYPE html>
-<html lang = "{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset = "utf-8">
-        <meta name = "viewport" content = "width = device-width, initial-scale = 1">
-
-        <title>在庫管理システム</title>
-
-        <!-- Fonts -->
-        <link href = "https://fonts.googleapis.com/css2?family = Nunito:wght@200;600&display = swap" rel = "stylesheet">
-
-        <!-- Styles -->
-        <style>
-            html, body {
-                background-color: #fff;
-                color: #636b6f;
-                font-family: 'Nunito', sans-serif;
-                font-weight: 200;
-                height: 100vh;
-                margin: 0;
-            }
-
-            .full-height {
-                height: 100vh;
-            }
-
-            .flex-center {
-                align-items: center;
-                display: flex;
-                justify-content: center;
-            }
-
-            .position-ref {
-                position: relative;
-            }
-
-            .top-right {
-                position: absolute;
-                right: 10px;
-                top: 18px;
-            }
-
-            .content {
-                text-align: center;
-            }
-
-            .title {
-                font-size: 50px;
-            }
-
-            .links > a {
-                color: #636b6f;
-                padding: 0 25px;
-                font-size: 13px;
-                font-weight: 600;
-                letter-spacing: .1rem;
-                text-decoration: none;
-                text-transform: uppercase;
-            }
-
-            .m-b-md {
-                margin-bottom: 30px;
-            }
-        </style>
-    </head>
     <body>
             <div class = "input-group">
                 <h5>検索フォーム</h5>
                 <form action = "{{ route( 'products' ) }}" method = "GET">
-                    <p>
-                        <input type = "text" class = "form-control" name = "product_name" value = "{{request('search')}}" placeholder = "商品名を入力"></p>
-                        <select class = "form-select" id = "company_id" name = "company_name">
-                            <option selected = "selected" value = "">選択してください</option>
-                            @foreach( $companies as $company)
-                                <option value = "{{ $company->company_id }}">{{ $company->company_name }}</option>
-                            @endforeach
-                        </select>
+                    <p><input type = "text" class = "form-control" id = "product_name" name = product_name value = "{{request('search')}}" placeholder = "商品名を入力"></p>
+                    <p><select class = "form-select" id = "company_id" name = "company_name"></P>
+                        <option selected = "selected" value = "">選択してください</option>
+                        @foreach( $companies as $company)
+                            <option value = "{{ $company->company_id }}">{{ $company->company_name }}</option>
+                        @endforeach
+                    </select>
+                    <p>価格の上限<input placeholder = "上限値を入力" type = "text" name = "max_price" class = "price" value  = "{{request('price')}}"></p>
+                    <p>価格の下限<input placeholder = "下限値を入力" type = "text" name = "min_price" class = "price" value  = "{{request('price')}}"></p>
+                    <p>在庫の上限<input placeholder = "上限値を入力" type = "text" name = "max_stock" class = "stock" value  = "{{request('stock')}}"></p>
+                    <p>在庫の下限<input placeholder = "下限値を入力" type = "text" name = "min_stock" class = "stock" value  = "{{request('stock')}}"></p>
                     <span class = "input-group-btn">
-                        <button type = "submit" class = "btn btn-default">検索</button>
+                        <button type = "submit" class = "btn btn-default" id = "btn btn-search">検索</button>
                     </span>
                 </form>
             </div>
@@ -94,18 +32,20 @@
                 </div>
 
                 <div class = "links">
-                    <table>
-                        <tr>
-                            <th>ID</th>
-                            <th>商品画像</th>
-                            <th>商品名</th>
-                            <th>価格</th>
-                            <th>在庫数</th>
-                            <th>メーカー</th>
-                            <th>詳細表示</th>
-                            <th>削除</th>
-                        </tr>
-                    <tbody>
+                    <table id = "_table" class = "table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>@sortablelink('product_id', 'ID')<span id = "sort1" sort = ""></span></th>
+                                <th>商品画像</th>
+                                <th>@sortablelink('product_name', '商品名')<span id = "sort1" sort = ""></th>
+                                <th>@sortablelink('price', '価格')<span id = "sort1" sort = ""></th>
+                                <th>@sortablelink('stock', '在庫数')<span id = "sort1" sort = ""></th>
+                                <th>@sortablelink('company_name', 'メーカー')</th>
+                                <th>詳細表示</th>
+                                <th>削除</th>
+                            </tr>
+                        </thead>
+                    <tbody id = 'product_list'>
                     @foreach ( $products as $product )
                         <tr>
                             <td>{{ $product->product_id }}</td>
@@ -133,7 +73,73 @@
             </div>
         </div>
     </body>
-</html>
 @endsection
 
-<script src = "{{ mix('/js/common.js') }}"></script>
+<!-- <script src = "{{ mix('/js/index.js') }}"></script> -->
+<script>
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    }
+});
+
+//一覧表示・検索（非同期処理）
+$(function() {
+    $('.btn-search').on('click', function() {
+        var product_name = $('#product_name').val();
+        var company_name = $('#company_name').val();
+        var price = $('#max_price').val();
+        var price = $('#min_price').val();
+        var stock = $('#max_stock').val();
+        var stock = $('#min_stock').val();
+
+        $.ajax({
+            type : 'GET',
+            url : 'posts'+$("#key").val(),
+            dataType : 'json',
+            data : {
+                keyword : product_name,
+                select : company_name,
+                price : price,
+                stock : stock
+            }
+        })
+        .done(function(data) {
+            $('.form-control').empty();//前回の検索結果が残っている場合はそれを消す
+            data.forEach(function(product_id){
+                $('.form-control').append('<th>${product_name}</th>');//form-controlを指定しているからappendの中身は<th>だけでもいける？
+                $('.form-select').append('<th>${company->company_name}</th>');
+                $('.price').append('<th>${price}</th>');
+                $('.stock').append('<th>${stock}</th>');
+                // console.log(product_id);
+            })
+        })
+        //フォームの送信に失敗した場合の処理
+        .fail(function() {
+          alert('error');
+        });
+    });
+});
+
+
+//削除（非同期処理）
+$(function() {
+    $('.btn-danger').on('click', function() {
+        var deleteConfirm = confirm('削除してよろしいでしょうか？');
+        if(deleteConfirm == true) {
+            var clickEle = $(this)
+            var product_id = clickEle.attr('data-user_id');
+            $.ajax({
+                type : 'DELETE',
+                url : '/destroy/' + product_id,
+                dataType : 'json',
+                data : {'id': product_id},
+            })
+        } else {
+            (function(e) {
+                e.preventDefault()
+            });
+        };
+    });
+});
+</script>

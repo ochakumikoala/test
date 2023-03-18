@@ -34,12 +34,26 @@ class ProductController extends Controller
      */
 
     public function index(Request $request) {
+        $products = Product::query();
         $product_name = $request->input( 'product_name' );
         $company_id = $request->input( 'company_name' );
-        
-        $products = $this->product->getProducts($product_name, $company_id);
+        $max_price = $request->input('max_price');
+        $min_price = $request->input('min_price');
+        $min_stock = $request->input('min_stock');
+        $max_stock = $request->input('max_stock');
 
-        return view('index', [ 'products' => $products, 'companies' => $this->company->getAll()]);
+        $products = Product::sortable();
+        $products = $this->product
+            ->getProducts($product_name, $company_id, $max_price, $min_price, $min_stock, $max_stock);
+        
+        return view('index', [ 
+            'products' => $products, 
+            'companies' => $this->company->getAll(), 
+            'price' => $max_price, 
+            'price' => $min_price,
+            'stock' => $max_stock,
+            'stock' => $min_stock,
+        ]);
     }
     
     /**
@@ -63,8 +77,7 @@ class ProductController extends Controller
      */
     public function show($id) {
         $product = Product::find($id);
-        if (empty($product)) {
-            \Session::flash('err_msg', 'データがありません。');
+        if (empty($product) == config('const.err_log.error')) {
             return redirect(route('index'));
         }
         return view( 'detail', compact('product') );
@@ -101,8 +114,7 @@ class ProductController extends Controller
     public function edit($id) {
         $companies = $this->company->all();
         $product = Product::find($id);
-        if (empty($product)) {
-            \Session::flash('err_msg', 'データがありません。');
+        if (empty($product) == config('const.err_log.error')) {
             return redirect(route('index'));
         }
         return view( 'edit', compact('companies', 'product') );
@@ -126,7 +138,6 @@ class ProductController extends Controller
 
     //画像を表示させる
     public function image(Request $request, Product $product) {
-
         // バリデーション省略
         $originalImg = $request->img_path;
       
@@ -135,6 +146,8 @@ class ProductController extends Controller
             $product->image = str_replace('public/', '', $filePath);
             $product->save();
           }
-      
-      }
+    }
+
+    
+
 }

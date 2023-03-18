@@ -37,4 +37,3 @@
 
 @endsection
 
-<script src = "{{ mix('js/common.js') }}"></script>

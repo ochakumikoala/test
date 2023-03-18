@@ -12,6 +12,7 @@
         "doctrine/dbal": "^3.6",
         "fideloper/proxy": "^4.4",
         "intervention/image": "^2.7",
+        "kyslik/column-sortable": "^6.5",
         "laravel/framework": "^6.20.26",
         "laravel/tinker": "^2.5",
         "laravel/ui": "1.*"
