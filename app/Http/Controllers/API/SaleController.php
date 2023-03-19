@@ -36,19 +36,6 @@ class SaleController extends Controller
             return $product;
         });
 
-        //減算処理
-        function decrementStock($id){
-            $product = Product::find($id);
-            $product->decrement('stock');
-            return redirect(route('products'));
-        }
-       
-        DB::transaction(function () {
-            if('stock' < 0){
-                throw new Exception('在庫がありません');
-            }
-        });
-
         return response()->json($products, Response::HTTP_OK);
     }
     
