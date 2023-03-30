@@ -12,7 +12,7 @@
                     <select class="form-select" id="product_id" name="company_id">
                         <option selected = "selected" >選択してください</option>
                         @foreach( $companies as $company)
-                            <option value = "{{ $company->company_id }}" @if($company->company_name === $product->company->company_name) selected @endif>{{ $product->company->company_name }}</option>
+                        <option value = "{{ $company->company_id }}" @if($company->company_name === $product->company->company_name) selected @endif>{{ $company->company_name }}</option>    
                         @endforeach
                     </select>
                 </p>
