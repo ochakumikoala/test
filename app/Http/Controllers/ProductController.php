@@ -35,6 +35,7 @@ class ProductController extends Controller
 
     public function index(Request $request) {
         $products = Product::query();
+        // $companies = Company::query();
         $product_name = $request->input( 'product_name' );
         $company_id = $request->input( 'company_name' );
         $max_price = $request->input('max_price');
@@ -46,6 +47,7 @@ class ProductController extends Controller
         $products = $this->product
             ->getProducts($product_name, $company_id, $max_price, $min_price, $min_stock, $max_stock);
         
+
         return view('index', [ 
             'products' => $products, 
             'companies' => $this->company->getAll(), 
@@ -143,11 +145,8 @@ class ProductController extends Controller
       
           if($originalImg->isValid()) {
             $filePath = $originalImg->store('public');
-            $product->image = str_replace('public/', '', $filePath);
+            $product->image = str_replace('public', '', $filePath);
             $product->save();
           }
     }
-
-    
-
 }

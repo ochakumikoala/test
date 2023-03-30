@@ -22,7 +22,9 @@ Auth::routes();
 Route::middleware([ 'auth' ])->prefix( 'product' )->group( function () {
     //商品一覧画面を表示
     Route::get( '/', 'ProductController@index' )->name( 'products' );
-    Route::get('posts', 'ProductController@search')->name('search');
+    Route::get('/posts', 'ProductController@search')->name('search');
+    Route::post('/ajax/search','API\SaleController@index');
+
 
     //商品の削除
     Route::delete( '/destroy/{id}', 'ProductController@destroy' )->name( 'delete' );

@@ -10,15 +10,17 @@ class Sale extends Model
     protected $dates =  ['created_at', 'updated_at'];
     protected $fillable = ['stock']; //編集していい値
 
-    public function decrementStock($id){
-        $product = Product::find($id);
-        $product->decrement('stock');
-        return redirect(route('products'));
-   
-        DB::transaction(function () {
-            if('stock' < 0){
-                throw new Exception('在庫がありません');
-            }
-        });
+    //減算処理
+    public function decrementStock($product){
+        $check_stock = Product::where('id', $product->product_id)->first()->stock_quantity;
+
+        if ($check_stock > 0 && $check_stock >= $product->quantity) {
+            $stock = Product::where('id', $product->product_id)->decrement('stock_quantity', $product->quantity);
+        }else{
+            //session()->flash(config('const.err_log.err_msg'));
+            throw new Exception();
+            return redirect(route('products'));
+        }
     }
+    
 }

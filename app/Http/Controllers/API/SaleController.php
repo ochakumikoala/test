@@ -4,8 +4,17 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Product;
+use App\Models\Sale;
+use App\Models\Company;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Intervention\Image\Facades\Image;
+use \InterventionImage;
+use Illuminate\View\View;
 
 class SaleController extends Controller
 {
@@ -17,10 +26,11 @@ class SaleController extends Controller
         $this->product = $product;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $product_name = $request->input( 'product_name' );
-        $company_id = $request->input( 'company_name' );
+        $products = Product::query();
+        $product_name = $request->input('product_name');
+        $company_id = $request->input('company_name');
         $max_price = $request->input('max_price');
         $min_price = $request->input('min_price');
         $min_stock = $request->input('min_stock');
@@ -29,14 +39,24 @@ class SaleController extends Controller
         $products = $this->product
             ->getProducts($product_name, $company_id, $max_price, $min_price, $min_stock, $max_stock);
         
-        $product_list = $products->map(function(Product $product){
-            $product['img_path'] = Storage::url($product->img_path);
-            $product['detail'] = route('detail', ['id' => $product->product_id]);
-            $product['delete'] = route('delete', $product->product_id);
-            return $product;
-        });
+        foreach($products as $key => $value){
+            $value->img_path = Storage::url($value->img_path);
+            $value->detail = route('detail', ['id' => $value->product_id]);
+            $value->delete = route('delete', $value->product_id);
+        }
 
-        return response()->json($products, Response::HTTP_OK);
+        foreach($products as $product) {
+            $product->company_name = $product->company->company_name;
+        }
+
+        return response()->json(['products' => $products,
+        'product_name' => $product_name,
+        'company_name' => $company_id,
+        'max_price' => $max_price,
+        'min_price' => $min_price,
+        'min_stock' => $min_stock,
+        'max_stock' => $max_stock,
+    ]);
     }
     
     //削除処理
