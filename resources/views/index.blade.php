@@ -176,7 +176,7 @@ $(function() {
         var deleteConfirm = confirm('削除してよろしいでしょうか？');
         if(deleteConfirm == true) {
             var clickEle = $(this)
-            var product_id = clickEle.attr('data-user_id');
+            var product_id = clickEle.attr('data-product_id');
             $.ajax({
                 type : 'DELETE',
                 url : '/destroy/' + product_id,
