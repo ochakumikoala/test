@@ -7,6 +7,15 @@ function checkSubmit(msg){
 
     if(!window.confirm(msg)){
         return false;
+    }else {
+        var clickEle = $(this)
+        var product_id = clickEle.attr('data-user_id');
+        $.ajax({
+        type : 'DELETE',
+        url : '/destroy/' + product_id,
+        dataType : 'json',
+        data : {'id': product_id},
+        })
     }
 }
 

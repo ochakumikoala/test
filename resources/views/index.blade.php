@@ -170,26 +170,26 @@ $(function() {
 
 
 
-//削除（非同期処理）
-$(function() {
-    $('.btn-danger').on('click', function() {
-        var deleteConfirm = confirm('削除してよろしいでしょうか？');
-        if(deleteConfirm == true) {
-            var clickEle = $(this)
-            var product_id = clickEle.attr('data-product_id');
-            $.ajax({
-                type : 'DELETE',
-                url : '/destroy/' + product_id,
-                dataType : 'json',
-                data : {'id': product_id},
-            })
-        } else {
-            (function(e) {
-                e.preventDefault()
-            });
-        };
-    });
-});
+// //削除（非同期処理）
+// $(function() {
+//     $('.btn-danger').on('click', function() {
+//         var deleteConfirm = confirm('削除してよろしいでしょうか？');
+//         if(deleteConfirm == true) {
+//             var clickEle = $(this)
+//             var product_id = clickEle.attr('data-product_id');
+//             $.ajax({
+//                 type : 'DELETE',
+//                 url : '/destroy/' + product_id,
+//                 dataType : 'json',
+//                 data : {'id': product_id},
+//             })
+//         } else {
+//             (function(e) {
+//                 e.preventDefault()
+//             });
+//         };
+//     });
+// });
 
 </script>
 @endsection
