@@ -140,9 +140,9 @@ $(function() {
                         <td>${price}</td>
                         <td>${stock}</td>
                         <td>${company_name}</td>
-                        <td><a href = "{{ route( 'detail', [ 'id' => $product->product_id ]) }}" class = "btn btn-primary">詳細表示</a></td>
+                        <td><a href = "${val.detail}" class = "btn btn-primary">詳細表示</a></td>
                         <td>
-                            <form action = "{{ route( 'delete', [ 'id' => $product->product_id ]) }}" method = "POST" onSubmit = "return checkSubmit('削除しますか？')">
+                            <form action = "${val.delete}" method = "POST" onSubmit = "return checkSubmit('削除しますか？')">
                                 @csrf
                                 @method('delete')
                                 <button type = "submit" class = "btn btn-danger">
@@ -170,26 +170,26 @@ $(function() {
 
 
 
-// //削除（非同期処理）
-// $(function() {
-//     $('.btn-danger').on('click', function() {
-//         var deleteConfirm = confirm('削除してよろしいでしょうか？');
-//         if(deleteConfirm == true) {
-//             var clickEle = $(this)
-//             var product_id = clickEle.attr('data-product_id');
-//             $.ajax({
-//                 type : 'DELETE',
-//                 url : '/destroy/' + product_id,
-//                 dataType : 'json',
-//                 data : {'id': product_id},
-//             })
-//         } else {
-//             (function(e) {
-//                 e.preventDefault()
-//             });
-//         };
-//     });
-// });
+//削除（非同期処理）
+$(function() {
+    $('.btn-danger').on('click', function() {
+        var deleteConfirm = confirm('削除してよろしいでしょうか？');
+        if(deleteConfirm == true) {
+            var clickEle = $(this)
+            var product_id = clickEle.attr('data-product_id');
+            $.ajax({
+                type : 'DELETE',
+                url : '/destroy/' + product_id,
+                dataType : 'json',
+                data : {'id': product_id},
+            })
+        } else {
+            (function(e) {
+                e.preventDefault()
+            });
+        };
+    });
+});
 
 </script>
 @endsection
